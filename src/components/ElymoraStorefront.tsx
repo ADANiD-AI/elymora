@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { MeetingMinutesView } from './MeetingMinutesView';
 import {
   Sparkles,
@@ -451,13 +452,21 @@ export const ElymoraStorefront: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((p) => {
+          {filteredProducts.map((p, index) => {
             const isWish = wishlist.includes(p.product_id);
 
             return (
-              <div
+              <motion.div
                 key={p.product_id}
-                className="bg-slate-900/90 border border-amber-900/40 hover:border-amber-500/70 rounded-2xl overflow-hidden transition-all duration-300 shadow-xl group flex flex-col justify-between"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.45,
+                  delay: index * 0.08,
+                  ease: [0.21, 0.47, 0.32, 0.98]
+                }}
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="bg-slate-900/90 border border-amber-900/40 hover:border-amber-500/70 rounded-2xl overflow-hidden transition-colors duration-300 shadow-xl group flex flex-col justify-between"
               >
                 <div>
                   {/* Image Container */}
@@ -537,7 +546,7 @@ export const ElymoraStorefront: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
