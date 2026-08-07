@@ -5,7 +5,33 @@ import * as pdfParseModule from "pdf-parse";
 import { GoogleGenAI } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 
-const pdfParse = (pdfParseModule as any).default || pdfParseModule;
+async function parsePdfBuffer(buffer: Buffer): Promise<string> {
+  // Option 1: PDFParse class in v2.x (e.g. mehmet-kozan/pdf-parse 2.4.5)
+  const PDFParseClass = (pdfParseModule as any).PDFParse || (pdfParseModule as any).default?.PDFParse;
+  if (typeof PDFParseClass === "function") {
+    const parser = new PDFParseClass({ data: buffer });
+    try {
+      const textResult = await parser.getText();
+      return (textResult?.text || "").replace(/\s+/g, " ").trim();
+    } finally {
+      if (typeof parser?.destroy === "function") {
+        await parser.destroy().catch(() => {});
+      }
+    }
+  }
+
+  // Option 2: Function in v1.x or default export
+  const pdfFn = typeof pdfParseModule === "function"
+    ? pdfParseModule
+    : (pdfParseModule as any).default;
+
+  if (typeof pdfFn === "function") {
+    const res = await pdfFn(buffer);
+    return (res?.text || "").replace(/\s+/g, " ").trim();
+  }
+
+  throw new Error("PDF parsing module failed to load a valid PDF parser function or class.");
+}
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -137,8 +163,7 @@ async function startServer() {
         return res.status(400).json({ error: "No PDF file uploaded" });
       }
 
-      const pdfData = await pdfParse(req.file.buffer);
-      const cleanedText = pdfData.text.replace(/\s+/g, " ").trim();
+      const cleanedText = await parsePdfBuffer(req.file.buffer);
 
       return res.json({
         filename: req.file.originalname,
