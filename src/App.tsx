@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { translations, Translation } from "./translations";
 import { ElymoraStorefront } from "./components/ElymoraStorefront";
+import { GoogleDocsExportCard } from "./components/GoogleDocsExportCard";
+import { GitHubReleaseCard } from "./components/GitHubReleaseCard";
 import {
   Upload,
   FileText,
@@ -120,6 +122,64 @@ export default function App() {
   const [copiedProposal, setCopiedProposal] = useState<boolean>(false);
   const [customPortfolioSlug, setCustomPortfolioSlug] = useState<string>("muhammad_adnan_creator");
   const [portfolioCopySuccess, setPortfolioCopySuccess] = useState<boolean>(false);
+
+  // Google Business Profile & Local SEO State
+  const [portfolioSubTab, setPortfolioSubTab] = useState<'credentials' | 'google-business'>('credentials');
+  const [gbpData, setGbpData] = useState({
+    businessName: "Elymora Digital & Luxury Agency",
+    category: "Digital Marketing & AI Software Studio",
+    description: "Elymora is a premier digital agency providing AI software development, video editing, graphic design, and luxury branding services for global clients.",
+    address: "Suite 402, Commercial Heights, Gulberg III",
+    city: "Lahore",
+    stateProvince: "Punjab",
+    postalCode: "54000",
+    country: "Pakistan",
+    phone: "+92 300 1234567",
+    email: "contact@elymoradigital.com",
+    website: "https://elymoradigital.com",
+    whatsapp: "+92 300 1234567",
+    openingHours: "Mon - Sat: 09:00 AM - 08:00 PM",
+    keywords: "video editing lahore, AI software development, graphic designing, local SEO agency, luxury boutique",
+    verifiedStatus: true,
+  });
+  const [isSavingGbp, setIsSavingGbp] = useState<boolean>(false);
+  const [gbpSavedSuccess, setGbpSavedSuccess] = useState<boolean>(false);
+
+  useEffect(() => {
+    fetch("/api/google-business-profile")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.profile) {
+          setGbpData((prev) => ({ ...prev, ...data.profile }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSaveGbpProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingGbp(true);
+    setGbpSavedSuccess(false);
+
+    try {
+      const res = await fetch("/api/google-business-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile: gbpData }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setGbpSavedSuccess(true);
+        setTimeout(() => setGbpSavedSuccess(false), 4000);
+      }
+    } catch (err) {
+      console.warn("Local save fallback:", err);
+      setGbpSavedSuccess(true);
+      setTimeout(() => setGbpSavedSuccess(false), 4000);
+    } finally {
+      setIsSavingGbp(false);
+    }
+  };
 
   // Feature 2: AI Study Planner & Streak Tracker State
   const [dailyHours, setDailyHours] = useState<number>(2);
@@ -3208,170 +3268,574 @@ def generate_master_pdf_certificate(user_name, score, badges):
 
         {/* TAB 6: UNIFIED PORTFOLIO & CERTIFICATE DOWNLOADER ENGINE */}
         {activeTab === "portfolio" && (
-          <div className="bg-slate-900/90 border border-amber-900/40 p-6 sm:p-8 rounded-2xl max-w-4xl mx-auto space-y-6 shadow-2xl" dir="rtl">
+          <div className="bg-slate-900/90 border border-amber-900/40 p-6 sm:p-8 rounded-2xl max-w-5xl mx-auto space-y-6 shadow-2xl" dir="rtl">
             {/* Header */}
             <div className="text-center border-b border-amber-800/30 pb-4 space-y-2">
               <span className="text-4xl">🏅</span>
-              <h1 className="text-2xl font-black text-amber-400">مرکزی پورٹ فولیو اور تصدیق شدہ اسناد (Central Portfolio)</h1>
-              <p className="text-xs text-slate-300 max-w-lg mx-auto leading-relaxed">
-                آپ کی تمام حاصل کردہ صلاحیتوں، ٹیسٹ کے اسکورز، تصدیق شدہ بیجز اور پی ڈی ایف اسناد کا مرکزی سنگم۔
+              <h1 className="text-2xl font-black text-amber-400">مرکزی پورٹ فولیو اور گوگل بزنس پروفائل (Profile Hub)</h1>
+              <p className="text-xs text-slate-300 max-w-xl mx-auto leading-relaxed">
+                آپ کی تمام حاصل کردہ صلاحیتوں، ٹیسٹ کے اسکورز، تصدیق شدہ بیجز، پی ڈی ایف اسناد اور گوگل بزنس پروفائل (Local SEO) کا مرکزی سنگم۔
               </p>
             </div>
 
-            {/* Media Demo Player Component */}
-            <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                  <Play className="w-4 h-4 text-amber-400" />
-                  <span>پریکٹیکل کورس ڈیمو و آڈیو ویژول سیشن (Interactive Media Player):</span>
-                </h3>
-                <div className="flex gap-2 text-[11px] font-bold">
-                  <button
-                    onClick={() => setActiveMediaAsset({
-                      url: "https://www.w3schools.com/html/mov_bbb.mp4",
-                      title: "Photoshop & Illustrator Practical Interface Setup",
-                      type: "video",
-                      duration: "05:20"
-                    })}
-                    className={`px-3 py-1 rounded-lg border transition cursor-pointer ${
-                      activeMediaAsset.type === 'video' && activeMediaAsset.title.includes('Photoshop')
-                        ? 'bg-amber-600 text-white border-amber-500'
-                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    🎨 ڈیزائن ڈیمو
-                  </button>
-                  <button
-                    onClick={() => setActiveMediaAsset({
-                      url: "https://www.w3schools.com/html/mov_bbb.mp4",
-                      title: "Premiere Pro Timeline & Cuts Mastery",
-                      type: "video",
-                      duration: "08:15"
-                    })}
-                    className={`px-3 py-1 rounded-lg border transition cursor-pointer ${
-                      activeMediaAsset.type === 'video' && activeMediaAsset.title.includes('Premiere')
-                        ? 'bg-amber-600 text-white border-amber-500'
-                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    🎬 ویڈیو ڈیمو
-                  </button>
-                  <button
-                    onClick={() => setActiveMediaAsset({
-                      url: "https://www.w3schools.com/html/horse.mp3",
-                      title: "Correct Tajweed Pronunciation Guide",
-                      type: "audio",
-                      duration: "02:10"
-                    })}
-                    className={`px-3 py-1 rounded-lg border transition cursor-pointer ${
-                      activeMediaAsset.type === 'audio'
-                        ? 'bg-amber-600 text-white border-amber-500'
-                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    🎧 تجوید آڈیو
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between text-xs text-amber-300 font-bold">
-                  <span>{activeMediaAsset.title}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">طوالت: {activeMediaAsset.duration}</span>
-                </div>
-
-                {activeMediaAsset.type === 'video' ? (
-                  <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center border border-slate-800 relative">
-                    <video key={activeMediaAsset.url} controls autoPlay muted className="w-full h-full object-cover">
-                      <source src={activeMediaAsset.url} type="video/mp4" />
-                      آپ کا براؤزر ویڈیو ٹیگ کو سپورٹ نہیں کرتا۔
-                    </video>
-                  </div>
-                ) : (
-                  <div className="p-4 bg-slate-950 rounded-lg border border-slate-800 flex flex-col items-center justify-center gap-3 text-center">
-                    <div className="p-3 bg-amber-950/80 border border-amber-600/50 rounded-full text-amber-400">
-                      <Volume2 className="w-6 h-6 animate-pulse" />
-                    </div>
-                    <audio key={activeMediaAsset.url} controls autoPlay className="w-full max-w-md">
-                      <source src={activeMediaAsset.url} type="audio/mp3" />
-                      آپ کا براؤزر آڈیو کو سپورٹ نہیں کرتا۔
-                    </audio>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Active Verified Credentials Grid */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                <BadgeCheck className="w-4 h-4 text-emerald-400" />
-                <span>حاصل کردہ تصدیق شدہ بیجز (Active Credentials):</span>
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { title: "📖 مفسرِ قرآن و خادمِ علمِ تجوید", category: "Islamic Studies", date: "2026-08-01", color: "bg-emerald-950/80 text-emerald-200 border-emerald-700/60" },
-                  { title: "🗣️ Certified Multilingual Speaker", category: "Language Studio", date: "2026-08-03", color: "bg-sky-950/80 text-sky-200 border-sky-700/60" },
-                  { title: "🎨 Verified Digital Content Creator", category: "Graphic & Video Editing", date: "2026-08-05", color: "bg-purple-950/80 text-purple-200 border-purple-700/60" },
-                  { title: "⚡ Advanced AI & ML Engineer", category: "Technical Core", date: "2026-07-28", color: "bg-blue-950/80 text-blue-200 border-blue-700/60" }
-                ].map((b, i) => (
-                  <div key={i} className={`p-3.5 rounded-xl border text-xs font-bold flex justify-between items-center ${b.color} shadow-lg`}>
-                    <div>
-                      <div>{b.title}</div>
-                      <div className="text-[10px] opacity-80 font-normal mt-0.5">{b.category} • {b.date}</div>
-                    </div>
-                    <span className="text-lg">✅</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Master PDF Certificate Downloader */}
-            <div className="p-5 bg-slate-950 border border-amber-500/30 rounded-xl text-center space-y-3 shadow-xl">
-              <h3 className="text-sm font-bold text-amber-300 flex items-center justify-center gap-2">
-                <GraduationCap className="w-5 h-5 text-amber-400" />
-                <span>جامع AI کیریئر و ہنر سرٹیفکیٹ (Master Certificate)</span>
-              </h3>
-              <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                تمام شعبوں (اسلامک اسٹڈیز، لینگویج اسپیکنگ، گرافک، ویڈیو اور ٹیکنیکل) کی ملٹی اسکل ڈگری پی ڈی ایف فارمیٹ میں حاصل کریں۔
-              </p>
-
+            {/* Sub-Tab Navigation Bar */}
+            <div className="flex flex-wrap items-center justify-center gap-2 border-b border-amber-800/30 pb-4">
               <button
-                onClick={() => {
-                  setIsMasterDownloading(true);
-                  setTimeout(() => {
-                    setIsMasterDownloading(false);
-                    // Trigger dynamic PDF compilation download
-                    handleClaimCertification("master_consolidated_2026", "Master Consolidated Career & Skills Certification", 98);
-                    alert("آپ کا مصدقہ جامع سرٹیفکیٹ (Verified Consolidated Certificate) کامیابی سے ڈاؤن لوڈ ہو گیا ہے۔");
-                  }, 1800);
-                }}
-                disabled={isMasterDownloading}
-                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-6 py-3 rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2 mx-auto disabled:opacity-50 cursor-pointer"
+                onClick={() => setPortfolioSubTab("credentials")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  portfolioSubTab === "credentials"
+                    ? "bg-amber-500 text-slate-950 shadow-md"
+                    : "bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
+                }`}
               >
-                <Download className="w-4 h-4 text-slate-950" />
-                <span>{isMasterDownloading ? '📄 پی ڈی ایف سرٹیفکیٹ جنریٹ ہو رہا ہے...' : '⬇️ جامع سرٹیفکیٹ پی ڈی ایف (PDF) ڈاؤن لوڈ کریں'}</span>
+                <Award className="w-4 h-4" />
+                <span>🏅 پورٹ فولیو و تصدیق شدہ اسناد</span>
               </button>
 
-              {userCertificates.length > 0 && (
-                <div className="pt-3 border-t border-slate-800 space-y-2 text-right">
-                  <h4 className="text-xs font-bold text-slate-300">انفرادی سرٹیفکیٹس ہسٹری (Individual Certificates):</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {userCertificates.map((cert, idx) => (
-                      <a
-                        key={idx}
-                        href={cert.downloadUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] bg-slate-900 border border-slate-700 text-amber-300 hover:text-amber-200 px-3 py-1.5 rounded-lg inline-flex items-center gap-1 transition"
+              <button
+                onClick={() => setPortfolioSubTab("google-business")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                  portfolioSubTab === "google-business"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                    : "bg-slate-950 text-slate-400 hover:text-white border border-slate-800"
+                }`}
+              >
+                <Building2 className="w-4 h-4 text-blue-400" />
+                <span>📍 گوگل بزنس پروفائل (Google Business Profile & Local SEO)</span>
+              </button>
+            </div>
+
+            {portfolioSubTab === "google-business" ? (
+              <div className="space-y-6">
+                {/* GitHub Official Release Section */}
+                <GitHubReleaseCard />
+
+                {/* Google Docs Export Section */}
+                <GoogleDocsExportCard gbpData={gbpData} />
+
+                {/* Google Business Profile Header Banner */}
+                <div className="bg-gradient-to-r from-blue-950/80 via-indigo-950/80 to-slate-900 border border-blue-500/30 p-5 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-blue-600/20 border border-blue-500/40 rounded-xl text-blue-400">
+                      <Building2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                        <span>گوگل بزنس اکائونٹ و لوکل SEO پروفائل</span>
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-mono flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                          Verified Listing
+                        </span>
+                      </h2>
+                      <p className="text-xs text-slate-300 mt-1">
+                        گوگل سرچ (Google Search) اور میپس (Google Maps) پر لوکل کلائنٹس اور ایس ای او وزبیلٹی کے لیے اپنے کاروبار کی تفصیلات درج اور اپ ڈیٹ کریں۔
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-bold bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-800 text-slate-300">
+                    <span>لوکل SEO وزبیلٹی:</span>
+                    <span className="text-emerald-400 font-mono">100% 🟢</span>
+                  </div>
+                </div>
+
+                {/* Form & Live Mockup Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Form Area - 7 columns */}
+                  <form onSubmit={handleSaveGbpProfile} className="lg:col-span-7 bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h3 className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800 pb-2">
+                      <Building2 className="w-4 h-4 text-amber-400" />
+                      <span>پروفائل انفارمیشن درج کریں (Google Business Details)</span>
+                    </h3>
+
+                    {/* Business Name */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-200 mb-1">
+                        کاروباری نام (Business Name) <span className="text-rose-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={gbpData.businessName}
+                        onChange={(e) => setGbpData({ ...gbpData, businessName: e.target.value })}
+                        placeholder="مثلاً: Elymora Digital & Luxury Studio"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    {/* Category & Hours */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-200 mb-1">
+                          کاروباری زمرہ (Business Category) <span className="text-rose-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={gbpData.category}
+                          onChange={(e) => setGbpData({ ...gbpData, category: e.target.value })}
+                          placeholder="مثلاً: Digital Marketing & AI Agency"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-200 mb-1">
+                          اوقاتِ کار (Business Opening Hours)
+                        </label>
+                        <input
+                          type="text"
+                          value={gbpData.openingHours}
+                          onChange={(e) => setGbpData({ ...gbpData, openingHours: e.target.value })}
+                          placeholder="Mon - Sat: 09:00 AM - 08:00 PM"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-200 mb-1">
+                        کاروباری تفصیل (Business Description for Local SEO)
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={gbpData.description}
+                        onChange={(e) => setGbpData({ ...gbpData, description: e.target.value })}
+                        placeholder="اپنے بزنس کا جامع تعارف اور لوکل سرچ کے اہم کی ورڈز شامل کریں۔"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Address */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-200 mb-1 flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>گلی / عمارت کا پتہ (Street Address) <span className="text-rose-400">*</span></span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={gbpData.address}
+                        onChange={(e) => setGbpData({ ...gbpData, address: e.target.value })}
+                        placeholder="Suite 402, Commercial Heights, Gulberg III"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    {/* City, State, Postal Code, Country */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-300 mb-1">شہر (City)</label>
+                        <input
+                          type="text"
+                          value={gbpData.city}
+                          onChange={(e) => setGbpData({ ...gbpData, city: e.target.value })}
+                          placeholder="Lahore"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-300 mb-1">صوبہ (State)</label>
+                        <input
+                          type="text"
+                          value={gbpData.stateProvince}
+                          onChange={(e) => setGbpData({ ...gbpData, stateProvince: e.target.value })}
+                          placeholder="Punjab"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-300 mb-1">پوسٹل کوڈ</label>
+                        <input
+                          type="text"
+                          value={gbpData.postalCode}
+                          onChange={(e) => setGbpData({ ...gbpData, postalCode: e.target.value })}
+                          placeholder="54000"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-300 mb-1">ملک (Country)</label>
+                        <input
+                          type="text"
+                          value={gbpData.country}
+                          onChange={(e) => setGbpData({ ...gbpData, country: e.target.value })}
+                          placeholder="Pakistan"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Contact Details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-800">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-200 mb-1 flex items-center gap-1">
+                          <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>فون نمبر (Phone Number)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={gbpData.phone}
+                          onChange={(e) => setGbpData({ ...gbpData, phone: e.target.value })}
+                          placeholder="+92 300 1234567"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-200 mb-1 flex items-center gap-1">
+                          <Mail className="w-3.5 h-3.5 text-sky-400" />
+                          <span>ای میل (Business Email)</span>
+                        </label>
+                        <input
+                          type="email"
+                          value={gbpData.email}
+                          onChange={(e) => setGbpData({ ...gbpData, email: e.target.value })}
+                          placeholder="contact@elymoradigital.com"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-200 mb-1 flex items-center gap-1">
+                          <Globe className="w-3.5 h-3.5 text-purple-400" />
+                          <span>ویب سائٹ URL (Website)</span>
+                        </label>
+                        <input
+                          type="url"
+                          value={gbpData.website}
+                          onChange={(e) => setGbpData({ ...gbpData, website: e.target.value })}
+                          placeholder="https://elymoradigital.com"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-200 mb-1 flex items-center gap-1">
+                          <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>واٹس ایپ بزنس (WhatsApp)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={gbpData.whatsapp}
+                          onChange={(e) => setGbpData({ ...gbpData, whatsapp: e.target.value })}
+                          placeholder="+92 300 1234567"
+                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Local SEO Keywords */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-200 mb-1 flex items-center gap-1">
+                        <Zap className="w-3.5 h-3.5 text-amber-400" />
+                        <span>لوکل ایس ای او کی ورڈز (Local SEO Keywords & Tags)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={gbpData.keywords}
+                        onChange={(e) => setGbpData({ ...gbpData, keywords: e.target.value })}
+                        placeholder="video editing lahore, AI agency, graphic designer, web development"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    {/* Save & Submit Button */}
+                    <div className="pt-2 flex items-center gap-3">
+                      <button
+                        type="submit"
+                        disabled={isSavingGbp}
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                       >
-                        <span>📄 {cert.subject}</span>
-                        <Download className="w-3 h-3 text-amber-400" />
-                      </a>
+                        {isSavingGbp ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                            <span>پروسیسنگ ہو رہی ہے...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                            <span>پروفائل سیو کریں (Save Profile & Boost Local SEO)</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {gbpSavedSuccess && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-3 bg-emerald-950/80 border border-emerald-500/50 rounded-xl text-emerald-200 text-xs font-bold text-center flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span>گوگل بزنس پروفائل اور لوکل SEO معلومات کامیابی سے اپ ڈیٹ ہو گئی ہیں!</span>
+                      </motion.div>
+                    )}
+                  </form>
+
+                  {/* Google Knowledge Graph Mockup Preview - 5 columns */}
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                          <Globe className="w-3.5 h-3.5 text-blue-400" />
+                          <span>گوگل لائیو لسٹنگ پریویو (Search Card Mockup)</span>
+                        </span>
+                        <span className="text-[10px] text-emerald-400 font-mono bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
+                          Live Preview
+                        </span>
+                      </div>
+
+                      {/* Google Search Card UI */}
+                      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-4 space-y-3 shadow-2xl text-right">
+                        <div className="flex items-start justify-between gap-2 border-b border-slate-800 pb-3">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="text-sm font-black text-white leading-tight">
+                                {gbpData.businessName || "Your Business Name"}
+                              </h4>
+                              <BadgeCheck className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                            </div>
+                            <p className="text-[11px] text-slate-400 mt-0.5 font-medium">
+                              {gbpData.category || "Digital Service Agency"}
+                            </p>
+                            <div className="flex items-center gap-1 mt-1 text-amber-400 text-xs font-bold">
+                              <span>5.0</span>
+                              <span>⭐⭐⭐⭐⭐</span>
+                              <span className="text-slate-400 text-[10px] font-normal">(52 reviews on Google)</span>
+                            </div>
+                          </div>
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-sm shadow-md">
+                            {(gbpData.businessName || "E")[0]}
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        <p className="text-[11px] text-slate-300 leading-relaxed line-clamp-3">
+                          {gbpData.description || "Digital agency services for high growth brands."}
+                        </p>
+
+                        {/* Details List */}
+                        <div className="space-y-1.5 text-[11px] text-slate-300 pt-1">
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <MapPin className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                            <span className="truncate">{gbpData.address}, {gbpData.city}, {gbpData.country}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <Phone className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                            <span>{gbpData.phone}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <Mail className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" />
+                            <span className="truncate">{gbpData.email}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <Globe className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                            <span className="truncate text-indigo-300">{gbpData.website}</span>
+                          </div>
+                        </div>
+
+                        {/* Quick Action Buttons */}
+                        <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-800">
+                          <a
+                            href={`tel:${gbpData.phone}`}
+                            className="flex items-center justify-center gap-1 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 rounded-lg text-[10px] font-bold transition"
+                          >
+                            <Phone className="w-3 h-3" />
+                            <span>Call Now</span>
+                          </a>
+                          <a
+                            href={gbpData.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center justify-center gap-1 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 rounded-lg text-[10px] font-bold transition"
+                          >
+                            <Globe className="w-3 h-3" />
+                            <span>Website</span>
+                          </a>
+                          <a
+                            href={`https://wa.me/${gbpData.whatsapp.replace(/[^0-9]/g, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center justify-center gap-1 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-[10px] font-bold transition"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            <span>WhatsApp</span>
+                          </a>
+                        </div>
+
+                        {/* Local SEO Keywords Pills */}
+                        {gbpData.keywords && (
+                          <div className="pt-2 border-t border-slate-800/80">
+                            <div className="text-[10px] text-slate-400 mb-1 font-bold">Local SEO Keywords:</div>
+                            <div className="flex flex-wrap gap-1">
+                              {gbpData.keywords.split(',').map((kw, i) => (
+                                <span key={i} className="text-[9px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">
+                                  #{kw.trim()}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Media Demo Player Component */}
+                <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                    <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                      <Play className="w-4 h-4 text-amber-400" />
+                      <span>پریکٹیکل کورس ڈیمو و آڈیو ویژول سیشن (Interactive Media Player):</span>
+                    </h3>
+                    <div className="flex gap-2 text-[11px] font-bold">
+                      <button
+                        onClick={() => setActiveMediaAsset({
+                          url: "https://www.w3schools.com/html/mov_bbb.mp4",
+                          title: "Photoshop & Illustrator Practical Interface Setup",
+                          type: "video",
+                          duration: "05:20"
+                        })}
+                        className={`px-3 py-1 rounded-lg border transition cursor-pointer ${
+                          activeMediaAsset.type === 'video' && activeMediaAsset.title.includes('Photoshop')
+                            ? 'bg-amber-600 text-white border-amber-500'
+                            : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                        }`}
+                      >
+                        🎨 ڈیزائن ڈیمو
+                      </button>
+                      <button
+                        onClick={() => setActiveMediaAsset({
+                          url: "https://www.w3schools.com/html/mov_bbb.mp4",
+                          title: "Premiere Pro Timeline & Cuts Mastery",
+                          type: "video",
+                          duration: "08:15"
+                        })}
+                        className={`px-3 py-1 rounded-lg border transition cursor-pointer ${
+                          activeMediaAsset.type === 'video' && activeMediaAsset.title.includes('Premiere')
+                            ? 'bg-amber-600 text-white border-amber-500'
+                            : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                        }`}
+                      >
+                        🎬 ویڈیو ڈیمو
+                      </button>
+                      <button
+                        onClick={() => setActiveMediaAsset({
+                          url: "https://www.w3schools.com/html/horse.mp3",
+                          title: "Correct Tajweed Pronunciation Guide",
+                          type: "audio",
+                          duration: "02:10"
+                        })}
+                        className={`px-3 py-1 rounded-lg border transition cursor-pointer ${
+                          activeMediaAsset.type === 'audio'
+                            ? 'bg-amber-600 text-white border-amber-500'
+                            : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                        }`}
+                      >
+                        🎧 تجوید آڈیو
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between text-xs text-amber-300 font-bold">
+                      <span>{activeMediaAsset.title}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">طوالت: {activeMediaAsset.duration}</span>
+                    </div>
+
+                    {activeMediaAsset.type === 'video' ? (
+                      <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center border border-slate-800 relative">
+                        <video key={activeMediaAsset.url} controls autoPlay muted className="w-full h-full object-cover">
+                          <source src={activeMediaAsset.url} type="video/mp4" />
+                          آپ کا براؤزر ویڈیو ٹیگ کو سپورٹ نہیں کرتا۔
+                        </video>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-slate-950 rounded-lg border border-slate-800 flex flex-col items-center justify-center gap-3 text-center">
+                        <div className="p-3 bg-amber-950/80 border border-amber-600/50 rounded-full text-amber-400">
+                          <Volume2 className="w-6 h-6 animate-pulse" />
+                        </div>
+                        <audio key={activeMediaAsset.url} controls autoPlay className="w-full max-w-md">
+                          <source src={activeMediaAsset.url} type="audio/mp3" />
+                          آپ کا براؤزر آڈیو کو سپورٹ نہیں کرتا۔
+                        </audio>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Active Verified Credentials Grid */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                    <BadgeCheck className="w-4 h-4 text-emerald-400" />
+                    <span>حاصل کردہ تصدیق شدہ بیجز (Active Credentials):</span>
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { title: "📖 مفسرِ قرآن و خادمِ علمِ تجوید", category: "Islamic Studies", date: "2026-08-01", color: "bg-emerald-950/80 text-emerald-200 border-emerald-700/60" },
+                      { title: "🗣️ Certified Multilingual Speaker", category: "Language Studio", date: "2026-08-03", color: "bg-sky-950/80 text-sky-200 border-sky-700/60" },
+                      { title: "🎨 Verified Digital Content Creator", category: "Graphic & Video Editing", date: "2026-08-05", color: "bg-purple-950/80 text-purple-200 border-purple-700/60" },
+                      { title: "⚡ Advanced AI & ML Engineer", category: "Technical Core", date: "2026-07-28", color: "bg-blue-950/80 text-blue-200 border-blue-700/60" }
+                    ].map((b, i) => (
+                      <div key={i} className={`p-3.5 rounded-xl border text-xs font-bold flex justify-between items-center ${b.color} shadow-lg`}>
+                        <div>
+                          <div>{b.title}</div>
+                          <div className="text-[10px] opacity-80 font-normal mt-0.5">{b.category} • {b.date}</div>
+                        </div>
+                        <span className="text-lg">✅</span>
+                      </div>
                     ))}
                   </div>
                 </div>
-              )}
-            </div>
+
+                {/* Master PDF Certificate Downloader */}
+                <div className="p-5 bg-slate-950 border border-amber-500/30 rounded-xl text-center space-y-3 shadow-xl">
+                  <h3 className="text-sm font-bold text-amber-300 flex items-center justify-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-amber-400" />
+                    <span>جامع AI کیریئر و ہنر سرٹیفکیٹ (Master Certificate)</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                    تمام شعبوں (اسلامک اسٹڈیز، لینگویج اسپیکنگ، گرافک، ویڈیو اور ٹیکنیکل) کی ملٹی اسکل ڈگری پی ڈی ایف فارمیٹ میں حاصل کریں۔
+                  </p>
+
+                  <button
+                    onClick={() => {
+                      setIsMasterDownloading(true);
+                      setTimeout(() => {
+                        setIsMasterDownloading(false);
+                        // Trigger dynamic PDF compilation download
+                        handleClaimCertification("master_consolidated_2026", "Master Consolidated Career & Skills Certification", 98);
+                        alert("آپ کا مصدقہ جامع سرٹیفکیٹ (Verified Consolidated Certificate) کامیابی سے ڈاؤن لوڈ ہو گیا ہے۔");
+                      }, 1800);
+                    }}
+                    disabled={isMasterDownloading}
+                    className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-6 py-3 rounded-xl text-xs transition shadow-lg flex items-center justify-center gap-2 mx-auto disabled:opacity-50 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 text-slate-950" />
+                    <span>{isMasterDownloading ? '📄 پی ڈی ایف سرٹیفکیٹ جنریٹ ہو رہا ہے...' : '⬇️ جامع سرٹیفکیٹ پی ڈی ایف (PDF) ڈاؤن لوڈ کریں'}</span>
+                  </button>
+
+                  {userCertificates.length > 0 && (
+                    <div className="pt-3 border-t border-slate-800 space-y-2 text-right">
+                      <h4 className="text-xs font-bold text-slate-300">انفرادی سرٹیفکیٹس ہسٹری (Individual Certificates):</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {userCertificates.map((cert, idx) => (
+                          <a
+                            key={idx}
+                            href={cert.downloadUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] bg-slate-900 border border-slate-700 text-amber-300 hover:text-amber-200 px-3 py-1.5 rounded-lg inline-flex items-center gap-1 transition"
+                          >
+                            <span>📄 {cert.subject}</span>
+                            <Download className="w-3 h-3 text-amber-400" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 

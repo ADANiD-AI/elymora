@@ -1301,6 +1301,46 @@ Question: "${query}"`
     return res.json(txn);
   });
 
+  // Google Business Profile Store & Endpoints for Local SEO
+  let googleBusinessProfileStore = {
+    businessName: "Elymora Digital & Luxury Agency",
+    category: "Digital Marketing & AI Software Studio",
+    description: "Elymora is a premier digital agency providing AI software development, video editing, graphic design, and luxury branding services for global clients.",
+    address: "Suite 402, Commercial Heights, Gulberg III",
+    city: "Lahore",
+    stateProvince: "Punjab",
+    postalCode: "54000",
+    country: "Pakistan",
+    phone: "+92 300 1234567",
+    email: "contact@elymoradigital.com",
+    website: "https://elymoradigital.com",
+    whatsapp: "+92 300 1234567",
+    openingHours: "Mon - Sat: 09:00 AM - 08:00 PM",
+    keywords: "video editing lahore, AI software development, graphic designing, local SEO agency, luxury boutique",
+    verifiedStatus: true,
+    updatedAt: new Date().toISOString()
+  };
+
+  app.get("/api/google-business-profile", (req, res) => {
+    res.json({ success: true, profile: googleBusinessProfileStore });
+  });
+
+  app.post("/api/google-business-profile", (req, res) => {
+    const { profile } = req.body || {};
+    if (profile && typeof profile === "object") {
+      googleBusinessProfileStore = {
+        ...googleBusinessProfileStore,
+        ...profile,
+        updatedAt: new Date().toISOString()
+      };
+    }
+    return res.json({
+      success: true,
+      message: "Google Business Profile and Local SEO details saved successfully!",
+      profile: googleBusinessProfileStore
+    });
+  });
+
   // Vite Middleware for Frontend Development & Static Serving
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
