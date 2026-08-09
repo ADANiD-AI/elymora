@@ -1,0 +1,23 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "adanid.fullname" . }}-ingress
+  annotations:
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+    {{- toYaml .Values.ingress.tls | nindent 4 }}
+  rules:
+    - host: api.{{ .Values.global.domain }}
+      http:
+        paths:
+          - path: /v1/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "adanid.fullname" . }}-identity-api
+                port:
+                  number: {{ .Values.identityApi.service.port }}
+{{- end }}

@@ -1,0 +1,17 @@
+{{- if .Values.identityApi.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "adanid.fullname" . }}-identity-api
+  labels:
+    {{- include "adanid.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.identityApi.service.type }}
+  ports:
+    - port: {{ .Values.identityApi.service.port }}
+      targetPort: {{ .Values.identityApi.service.port }}
+      protocol: TCP
+      name: http
+  selector:
+    app: identity-api
+{{- end }}

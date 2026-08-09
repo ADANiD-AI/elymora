@@ -1,0 +1,6 @@
+apiVersion: v2
+name: adanid-microservices
+description: Helm chart for ADANiD-AI Ecosystem Microservices
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

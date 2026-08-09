@@ -4,6 +4,9 @@ import { translations, Translation } from "./translations";
 import { ElymoraStorefront } from "./components/ElymoraStorefront";
 import { GoogleDocsExportCard } from "./components/GoogleDocsExportCard";
 import { GitHubReleaseCard } from "./components/GitHubReleaseCard";
+import { KaggleHuggingFaceCard } from "./components/KaggleHuggingFaceCard";
+import { VideoPromptStudioCard } from "./components/VideoPromptStudioCard";
+import { AdanIdOrgCard } from "./components/AdanIdOrgCard";
 import {
   Upload,
   FileText,
@@ -3307,6 +3310,15 @@ def generate_master_pdf_certificate(user_name, score, badges):
 
             {portfolioSubTab === "google-business" ? (
               <div className="space-y-6">
+                {/* ADANiD-AI Organization Integration Hub */}
+                <AdanIdOrgCard />
+
+                {/* AI Video Animation Studio Prompts Card */}
+                <VideoPromptStudioCard />
+
+                {/* Kaggle & Hugging Face Deployment Card */}
+                <KaggleHuggingFaceCard />
+
                 {/* GitHub Official Release Section */}
                 <GitHubReleaseCard />
 

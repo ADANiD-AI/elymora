@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  identity-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: adanid-identity-api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-adanid-super-secret-key}
+      - DATABASE_URL=postgres://adanid_user:secure_password@postgres:5432/adanid_db
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - adanid-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: adanid-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: adanid_user
+      POSTGRES_PASSWORD: secure_password
+      POSTGRES_DB: adanid_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U adanid_user -d adanid_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - adanid-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: adanid-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - adanid-network
+
+networks:
+  adanid-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -1,0 +1,41 @@
+name: Automated Jest Testing Suite
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  run-tests:
+    name: Run Jest & Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Execute Jest Tests
+        run: npm test -- --ci --maxWorkers=2
+
+      - name: Generate Test Coverage
+        run: npm run test:coverage -- --ci --maxWorkers=2
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-coverage-report
+          path: coverage/

@@ -150,6 +150,91 @@ export const GitHubReleaseCard: React.FC = () => {
           </ul>
         </div>
 
+        {/* GitHub Actions CI/CD Automated Release Section */}
+        <div className="bg-slate-900 border border-purple-500/40 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-bold text-purple-300">
+              <Terminal className="w-4 h-4 text-purple-400" />
+              <span>3. آٹومیٹڈ گٹ ہب ایکشنز ریلیز ورک فلو (.github/workflows/release.yml):</span>
+            </div>
+            <button
+              onClick={() => copyToClipboard(`name: Automated Release & Build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Create GitHub Release & Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Web App
+        run: npm run build
+
+      - name: Zip Build Bundle
+        run: |
+          cd dist
+          zip -r ../elymora-web-build.zip .
+          cd ..
+
+      - name: Check Pre-release Status
+        id: check_prerelease
+        run: |
+          if [[ "\${{ github.ref_name }}" =~ - ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: \${{ github.ref_name }}
+          name: Elymora Release \${{ github.ref_name }}
+          draft: false
+          prerelease: \${{ steps.check_prerelease.outputs.is_prerelease }}
+          generate_release_notes: true
+          files: |
+            elymora-web-build.zip
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}`, 'workflow')}
+              className="bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/50 text-purple-200 text-xs px-3 py-1 rounded-lg flex items-center gap-1.5 transition cursor-pointer font-bold"
+            >
+              {copiedSection === 'workflow' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedSection === 'workflow' ? 'کاپی ہو گیا!' : 'ورک فلو کاپی کریں'}</span>
+            </button>
+          </div>
+
+          <p className="text-[11px] text-slate-400">
+            یہ YAML فائل پروژیکٹ میں <code className="text-purple-300 bg-slate-950 px-1 rounded font-mono">.github/workflows/release.yml</code> کے طور پر محفوظ کر دی گئی ہے۔ جیسے ہی آپ نیا ٹیگ پش کریں گے، گٹ ہب ایکشنز خودکار طور پر نیا ریلیز اور بلڈ ZIP اپلوڈ کر دے گا۔
+          </p>
+
+          <pre className="bg-slate-950 p-3 rounded-lg text-emerald-300 font-mono text-[11px] ltr text-left border border-slate-800 overflow-x-auto max-h-48">
+{`git tag v0.1.0-alpha
+git push origin v0.1.0-alpha`}
+          </pre>
+        </div>
+
         {/* Android Build Commands Helper */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
           <div className="flex items-center gap-2 text-xs font-bold text-amber-300">

@@ -1,0 +1,13 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build & Upload iOS App to TestFlight"
+  lane :deploy_testflight do
+    setup_ci
+    match(type: "appstore", readonly: true)
+    build_app(workspace: "Elymora.xcworkspace", scheme: "Elymora")
+    upload_to_testflight(
+      api_key_path: ENV['APP_STORE_CONNECT_KEY_PATH']
+    )
+  end
+end

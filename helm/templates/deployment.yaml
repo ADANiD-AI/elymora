@@ -1,0 +1,32 @@
+{{- if .Values.identityApi.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "adanid.fullname" . }}-identity-api
+  labels:
+    {{- include "adanid.labels" . | nindent 4 }}
+    app: identity-api
+spec:
+  replicas: {{ .Values.identityApi.replicaCount }}
+  selector:
+    matchLabels:
+      app: identity-api
+  template:
+    metadata:
+      labels:
+        app: identity-api
+    spec:
+      containers:
+        - name: identity-api
+          image: "{{ .Values.identityApi.image.repository }}:{{ .Values.identityApi.image.tag }}"
+          imagePullPolicy: {{ .Values.identityApi.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.identityApi.service.port }}
+          env:
+            {{- range $key, $val := .Values.identityApi.env }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.identityApi.resources | nindent 12 }}
+{{- end }}

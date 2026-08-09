@@ -96,13 +96,20 @@ export const GoogleDocsExportCard: React.FC<GoogleDocsExportCardProps> = ({ gbpD
     try {
       let token = getAccessToken();
       if (!token) {
-        const res = await googleSignIn();
-        if (!res?.accessToken) {
-          throw new Error('براہِ کرم گوگل سائن ان کر کے ایکسس ٹوکن حاصل کریں۔');
+        try {
+          const res = await googleSignIn();
+          if (!res?.accessToken) {
+            setIsGeneratingDoc(false);
+            return;
+          }
+          setUser(res.user);
+          if (res.user.email) setRecipientEmail(res.user.email);
+          token = res.accessToken;
+        } catch (authErr: any) {
+          setErrorMsg(authErr.message || 'براہِ کرم گوگل سائن ان کا عمل مکمل کریں۔');
+          setIsGeneratingDoc(false);
+          return;
         }
-        setUser(res.user);
-        if (res.user.email) setRecipientEmail(res.user.email);
-        token = res.accessToken;
       }
 
       const formattedDate = new Date().toLocaleDateString('ur-PK', {

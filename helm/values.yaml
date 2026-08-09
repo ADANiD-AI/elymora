@@ -1,0 +1,46 @@
+global:
+  environment: production
+  domain: adanid.ai
+
+identityApi:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/adanid-ai/identity-api
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 3000
+  env:
+    NODE_ENV: production
+    PORT: "3000"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+elymoraBackend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/adanid-ai/elymora-backend
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  tls:
+    - secretName: adanid-tls-cert
+      hosts:
+        - api.adanid.ai

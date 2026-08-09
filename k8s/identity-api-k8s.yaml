@@ -1,0 +1,123 @@
+# 1. ConfigMap for Non-Sensitive Environment Variables
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: identity-api-config
+  namespace: default
+  labels:
+    app: identity-api
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  REDIS_URL: "redis://adanid-redis:6379"
+
+---
+# 2. Secret for Sensitive Data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: identity-api-secret
+  namespace: default
+  labels:
+    app: identity-api
+type: Opaque
+stringData:
+  JWT_SECRET: "adanid-super-secret-production-key"
+  DATABASE_URL: "postgres://adanid_user:secure_password@adanid-postgres:5432/adanid_db"
+
+---
+# 3. Deployment Manifest
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adanid-identity-api
+  namespace: default
+  labels:
+    app: identity-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: identity-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: identity-api
+    spec:
+      containers:
+        - name: identity-api
+          image: ghcr.io/adanid-ai/identity-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: identity-api-config
+            - secretRef:
+                name: identity-api-secret
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /v1/auth/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /v1/auth/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+---
+# 4. ClusterIP Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: adanid-identity-api
+  namespace: default
+  labels:
+    app: identity-api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: identity-api
+
+---
+# 5. Horizontal Pod Autoscaler (HPA) for Scaling
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: identity-api-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: adanid-identity-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
