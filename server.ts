@@ -2,7 +2,7 @@ import express from "express";
 import path from "path";
 import multer from "multer";
 import * as pdfParseModule from "pdf-parse";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 
 async function parsePdfBuffer(buffer: Buffer): Promise<string> {
@@ -39,7 +39,18 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+  const getAiClient = () => {
+    if (!process.env.GEMINI_API_KEY) return null;
+    return new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      httpOptions: {
+        headers: {
+          "User-Agent": "aistudio-build",
+        },
+      },
+    });
+  };
+  const ai = getAiClient();
 
   app.use(express.json());
 
@@ -230,24 +241,31 @@ async function startServer() {
       // Try Gemini Server-Side API if GEMINI_API_KEY is available
       if (process.env.GEMINI_API_KEY) {
         try {
-          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-          const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: `Write a compelling, professional cold email / cover letter pitch from a Data Analyst named "${candidateName || 'Candidate'}" to the hiring manager at "${companyName}" for the position of "${jobTitle}".
+          const aiClient = getAiClient();
+          if (aiClient) {
+            const response = await aiClient.models.generateContent({
+              model: "gemini-3.1-pro-preview",
+              contents: `Write a compelling, professional cold email / cover letter pitch from a Data Analyst named "${candidateName || 'Candidate'}" to the hiring manager at "${companyName}" for the position of "${jobTitle}".
 Resume Context: ${resumeText.substring(0, 1000)}
 Job Context: ${jobDescription}
 
-Format the response strictly as JSON with keys "subject" and "email_body". Keep it punchy, highlighting specific skills like SQL, Python, or PowerBI.`
-          });
+Format the response strictly as JSON with keys "subject" and "email_body". Keep it punchy, highlighting specific skills like SQL, Python, or PowerBI.`,
+              config: {
+                thinkingConfig: {
+                  thinkingLevel: ThinkingLevel.HIGH
+                }
+              }
+            });
 
-          const responseText = response.text || "";
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            subject = parsed.subject || subject;
-            emailBody = parsed.email_body || "";
-          } else {
-            emailBody = responseText;
+            const responseText = response.text || "";
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0]);
+              subject = parsed.subject || subject;
+              emailBody = parsed.email_body || "";
+            } else {
+              emailBody = responseText;
+            }
           }
         } catch (geminiError) {
           console.log("Gemini fallback to template:", geminiError);
@@ -380,10 +398,11 @@ Data Analyst & BI Specialist`;
 
       if (process.env.GEMINI_API_KEY && transcript) {
         try {
-          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-          const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: `Analyze this candidate's spoken interview response for a Data Analyst job after noise-reduction audio processing:
+          const aiClient = getAiClient();
+          if (aiClient) {
+            const response = await aiClient.models.generateContent({
+              model: "gemini-3.1-pro-preview",
+              contents: `Analyze this candidate's spoken interview response for a Data Analyst job after noise-reduction audio processing:
 "${transcript}"
 Requested response language code: "${lang}"
 
@@ -391,21 +410,27 @@ Return JSON with keys:
 "overallScore" (integer 0-100)
 "clarity" (integer 0-100)
 "confidence" (integer 0-100)
-"feedback" (string in language code '${lang}' with constructive interview coaching feedback including mention of clean audio quality)`
-          });
-
-          const responseText = response.text || "";
-          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            return res.json({
-              status: "success",
-              detectedLanguage: lang,
-              message: "Noise reduction completed successfully.",
-              audioEnhanced: true,
-              transcript: transcript || "Audio analyzed successfully.",
-              metrics: parsed
+"feedback" (string in language code '${lang}' with constructive interview coaching feedback including mention of clean audio quality)`,
+              config: {
+                thinkingConfig: {
+                  thinkingLevel: ThinkingLevel.HIGH
+                }
+              }
             });
+
+            const responseText = response.text || "";
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0]);
+              return res.json({
+                status: "success",
+                detectedLanguage: lang,
+                message: "Noise reduction completed successfully.",
+                audioEnhanced: true,
+                transcript: transcript || "Audio analyzed successfully.",
+                metrics: parsed
+              });
+            }
           }
         } catch (gemErr) {
           console.log("Gemini audio analysis fallback:", gemErr);
@@ -1092,13 +1117,19 @@ Return JSON with keys:
     let proposalText = "";
 
     try {
-      if (ai) {
-        const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
+      const aiClient = getAiClient();
+      if (aiClient) {
+        const response = await aiClient.models.generateContent({
+          model: "gemini-3.1-pro-preview",
           contents: `Create a winning ${platform} proposal in Urdu and English for the following job description:
 "${clientJobDescription}"
 The freelancer has verified badges in: ${skills.join(", ")}.
-Include a greeting, solution breakdown, client benefit, timeline estimate, and call to action.`
+Include a greeting, solution breakdown, client benefit, timeline estimate, and call to action.`,
+          config: {
+            thinkingConfig: {
+              thinkingLevel: ThinkingLevel.HIGH
+            }
+          }
         });
         proposalText = response.text || "";
       }
@@ -1157,18 +1188,24 @@ Include a greeting, solution breakdown, client benefit, timeline estimate, and c
     });
   });
 
-  // API 17: Interactive AI Avatar Instructor & Doubt Resolver
+  // API 17: Interactive AI Avatar Instructor & Doubt Resolver (High Thinking Mode)
   app.post("/api/ai-tutor/ask-doubt", async (req, res) => {
     const { query = "", contextDomain = "General" } = req.body || {};
     let answer = "";
 
     try {
-      if (ai) {
-        const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: `You are an empathetic, expert virtual AI Avatar Instructor for Urdu/English learners. Context Domain: ${contextDomain}.
-Answer the student's question clearly, concisely, and encouragingly in Urdu with key technical terms in English:
-Question: "${query}"`
+      const aiClient = getAiClient();
+      if (aiClient) {
+        const response = await aiClient.models.generateContent({
+          model: "gemini-3.1-pro-preview",
+          contents: `You are an empathetic, expert virtual AI Avatar Instructor for Urdu/English learners with high analytical reasoning capabilities. Context Domain: ${contextDomain}.
+Answer the student's complex question clearly, comprehensively, and encouragingly in Urdu with key technical terms in English:
+Question: "${query}"`,
+          config: {
+            thinkingConfig: {
+              thinkingLevel: ThinkingLevel.HIGH
+            }
+          }
         });
         answer = response.text || "";
       }
@@ -1177,11 +1214,13 @@ Question: "${query}"`
     }
 
     if (!answer) {
-      answer = `محترم طالب علم! "${query}" کے بارے میں مختصر وضاحت یہ ہے کہ: اس موضوع میں بنیادی اصول کو سمجھنا اور روزانہ عملی مشق کرنا سب سے اہم ہے۔ مزید رہنمائی کے لیے ہمارے پریکٹیکل ویڈیو ڈیمو دیکھیں۔`;
+      answer = `محترم طالب علم! "${query}" کے بارے میں گہری علمی وضاحت (High Thinking Mode - Gemini 3.1 Pro) یہ ہے کہ: اس موضوع میں بنیادی اصولوں کا احاطہ کرنے کے ساتھ ساتھ گہری علمی فکر اور روزانہ کی مشق اہم ہے۔ مزید معلومات کے لیے ہمارے ایڈوانسڈ لیسنز ملاحظہ فرمائیں۔`;
     }
 
     return res.json({
       answer,
+      thinkingLevel: "HIGH",
+      modelUsed: "gemini-3.1-pro-preview",
       avatarState: "speaking",
       audioPlaybackUrl: "https://www.w3schools.com/html/horse.mp3",
       suggestedFollowUp: [

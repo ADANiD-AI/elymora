@@ -4230,8 +4230,14 @@ def generate_master_pdf_certificate(user_name, score, badges):
 
               {/* Question Input Area */}
               <div className="space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <label className="font-semibold text-slate-300">اپنا سوال ٹائپ کریں یا پوچھیں (Ask a Question):</label>
+                <div className="flex flex-wrap justify-between items-center text-xs gap-2">
+                  <div className="flex items-center gap-2">
+                    <label className="font-semibold text-slate-300">اپنا سوال ٹائپ کریں یا پوچھیں (Ask a Question):</label>
+                    <span className="px-2 py-0.5 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300 text-[10px] font-bold tracking-wide flex items-center gap-1">
+                      <Zap className="w-3 h-3 text-pink-400" />
+                      Gemini 3.1 Pro (High Thinking)
+                    </span>
+                  </div>
                   <select
                     value={tutorDomainContext}
                     onChange={(e) => setTutorDomainContext(e.target.value)}
